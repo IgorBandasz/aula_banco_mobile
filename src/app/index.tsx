@@ -1,21 +1,56 @@
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDocs, updateDoc } from "firebase/firestore";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { db } from "../../firebaseConfig";
 
+type Produto = {
+  nome: string,
+  preco: number,
+  unidade: string
+}
+
 export default function Index() {
-  
-  function inserir(){
+
+  function inserir() {
     const prod = {
       nome: 'Bergamota',
       preco: 7.99,
       unidade: 'KG'
     }
 
-    try{
+    try {
       addDoc(collection(db, 'produtos'), prod);
       Alert.alert('Produto inserido');
-    }catch(e){
+    } catch (e) {
       Alert.alert('Erro', String(e));
+    }
+  }
+
+  async function consultar() {
+    const querySnapshot = await getDocs(collection(db, 'produtos'))
+    querySnapshot.docs.map((doc) => {
+      const prod = doc.data() as Produto;
+      console.log(doc.id + ' - ' + prod.nome)
+    })
+  }
+
+  async function deletar() {
+    try {
+      await deleteDoc(doc(db, 'produtos', 'gYkwhLMGQaWBAYhQchdC'))
+      Alert.alert('Produto removido')
+    } catch (e) {
+      Alert.alert('Erro', String(e))
+    }
+  }
+
+  function alterar() {
+    try {
+      const docRef = doc(db, 'produtos', 'sRBYziYyfNurCKMzsHUF')
+      updateDoc(docRef, {
+        nome: 'Ruffles Grande',
+        codBarras: '7891234567890'
+      })
+    } catch (e) {
+      Alert.alert('Erro', String(e))
     }
   }
 
@@ -24,6 +59,21 @@ export default function Index() {
       <Pressable
         onPress={inserir}>
         <Text style={styles.texto}>Inserir dado no banco</Text>
+      </Pressable>
+
+      <Pressable
+        onPress={consultar}>
+        <Text style={styles.texto}>Consultar Produtos</Text>
+      </Pressable>
+
+      <Pressable
+        onPress={deletar}>
+        <Text style={styles.texto}>Deletar Produto</Text>
+      </Pressable>
+
+      <Pressable
+        onPress={alterar}>
+        <Text style={styles.texto}>Alterar Produto</Text>
       </Pressable>
     </View>
   );
