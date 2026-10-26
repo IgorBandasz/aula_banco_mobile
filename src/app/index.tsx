@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { addDoc, collection, deleteDoc, doc, getDocs, updateDoc } from "firebase/firestore";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { db } from "../../firebaseConfig";
@@ -54,6 +55,8 @@ export default function Index() {
     }
   }
 
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
       <Pressable
@@ -74,6 +77,11 @@ export default function Index() {
       <Pressable
         onPress={alterar}>
         <Text style={styles.texto}>Alterar Produto</Text>
+      </Pressable>
+
+      <Pressable
+        onPress={()=>{router.navigate('/consultar_produtos')}}>
+        <Text style={styles.texto}>Tela de Consulta</Text>
       </Pressable>
     </View>
   );
