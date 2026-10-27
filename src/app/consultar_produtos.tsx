@@ -1,4 +1,5 @@
 import { Produto } from "@/types/Produto";
+import { useRouter } from "expo-router";
 import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 import { useState } from "react";
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
@@ -31,6 +32,18 @@ export default function ConsultaProdutos() {
         }
     }
 
+    const router = useRouter();
+
+    function alterar(id: string){
+        //chamar a tela de alteração passando o ID
+        router.push({
+            pathname: '/alterar_produto',
+            params: {
+                idParam: id
+            }
+        })
+    }
+
     return (
         <View style={styles.container}>
             <Pressable
@@ -42,7 +55,7 @@ export default function ConsultaProdutos() {
                 data={lista}
                 renderItem={(item) => {
                     return (
-                        <View>
+                        <View style={styles.card}>
                             <Text>ID: {item.item.id}</Text>
                             <Text>NOME: {item.item.nome}</Text>
                             <Text>UNIDADE: {item.item.unidade}</Text>
@@ -51,6 +64,11 @@ export default function ConsultaProdutos() {
                             <Pressable
                                 onPress={()=>{deletar(item.item.id)}}>
                                 <Text style={styles.texto}>Del</Text>
+                            </Pressable>
+
+                            <Pressable
+                                onPress={()=>{alterar(item.item.id)}}>
+                                <Text style={styles.texto}>Alt</Text>
                             </Pressable>
                         </View>
                     )
@@ -67,5 +85,8 @@ const styles = StyleSheet.create({
     },
     texto: {
         fontSize: 20
+    },
+    card:{
+        borderWidth: 1
     }
 });
