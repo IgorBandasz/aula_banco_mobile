@@ -1,8 +1,8 @@
 import { Produto } from "@/types/Produto";
-import { useLocalSearchParams } from "expo-router";
-import { doc, getDoc } from "firebase/firestore";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { db } from "../../firebaseConfig";
 
 export default function AlterarProduto() {
@@ -10,21 +10,76 @@ export default function AlterarProduto() {
   const [nome, setNome] = useState('');
   const [unidade, setUnidade] = useState('');
   const [preco, setPreco] = useState('');
-  
-  const {idParam} = useLocalSearchParams<{idParam:string}>();
+  const [carregando, setCarregando] = useState(true);
 
-  useEffect(()=>{
+  const { idParam } = useLocalSearchParams<{ idParam: string }>();
+
+  useEffect(() => {
     consultar()
-  }
-  ,[]);
+  }, []);
 
-  async function consultar(){
-    const querySnapshot = await getDoc(doc(db, 'produtos', idParam))
-    const prod = querySnapshot.data() as Produto;
-    setId(querySnapshot.id) 
-    setNome(prod.nome)
-    setUnidade(prod.unidade)
-    setPreco(prod.preco.toFixed(2))
+  async function consultar() {
+    setCarregando(true);
+    try {
+      const querySnapshot = await getDoc(doc(db, 'produtos', idParam))
+      const prod = querySnapshot.data() as Produto;
+      setId(querySnapshot.id)
+      setNome(prod.nome)
+      setUnidade(prod.unidade)
+      setPreco(prod.preco.toFixed(2))
+    } finally {
+      setCarregando(false)
+    }
+  }
+
+  function validarCampos() {
+    if (nome.trim() === '') {
+      Alert.alert('Campo "Nome" em branco.')
+      return false;
+    }
+    if (unidade.trim() === '') {
+      Alert.alert('Campo "Unidade" em branco.')
+      return false;
+    }
+    if (preco.trim() === '') {
+      Alert.alert('Campo "Preço" em branco.')
+      return false;
+    }
+    if (Number.isNaN(Number(preco))) {
+      Alert.alert('Campo "Preço" é inválido.')
+      return false;
+    }
+
+    return true;
+  }
+
+  const router = useRouter();
+
+  async function salvar() {
+    //validações
+    if (!validarCampos) {
+      return
+    }
+
+    setCarregando(true);
+    try {
+      const prod = {
+        nome: nome,
+        unidade: unidade,
+        preco: Number.parseFloat(preco)
+      } as Produto;
+
+      try {
+        await setDoc(doc(db, 'produtos', id), prod);
+        Alert.alert('Alterado com sucesso');
+        router.back();
+      } catch (erro) {
+        Alert.alert('Erro ao alterar.', String(erro))
+      }
+    } finally {
+      setCarregando(false)
+    }
+
   }
 
   return (
@@ -34,6 +89,7 @@ export default function AlterarProduto() {
         <TextInput
           style={styles.input}
           value={id}
+          editable={false}
           onChangeText={setId} />
       </View>
 
@@ -61,11 +117,17 @@ export default function AlterarProduto() {
           onChangeText={setPreco} />
       </View>
 
-      <Pressable>
+      <Pressable
+        onPress={salvar}>
         <View style={{ padding: 5, backgroundColor: 'green' }}>
           <Text style={{ fontSize: 20, color: 'white' }}>Salvar</Text>
         </View>
       </Pressable>
+
+      <ActivityIndicator
+        animating={carregando}
+        size='large' />
+
     </View>
   )
 }
